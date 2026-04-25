@@ -1,4 +1,4 @@
-*Antonio Youssef file number: 60462, Emilio Yared file number: 61453*
+*By Antonio Youssef and Emilio Yared*
 
 # Project Structure and Running
 
