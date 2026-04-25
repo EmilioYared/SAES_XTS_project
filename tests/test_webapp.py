@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from helpers.encoding_utils import describe_latin1_message, encode_latin1_text
+from webapp.app import _parse_saes_plaintext_block_text
 from webapp.trace_adapter import (
     build_encryption_walkthrough,
     extract_block_detail,
@@ -36,6 +37,13 @@ class EncodingHelperTests(unittest.TestCase):
     def test_encode_latin1_rejects_non_latin1_characters(self) -> None:
         with self.assertRaises(ValueError):
             encode_latin1_text("A🙂")
+
+    def test_parse_saes_plaintext_block_text_requires_exactly_two_bytes(self) -> None:
+        self.assertEqual(_parse_saes_plaintext_block_text("AB"), b"AB")
+        with self.assertRaises(ValueError):
+            _parse_saes_plaintext_block_text("A")
+        with self.assertRaises(ValueError):
+            _parse_saes_plaintext_block_text("ABC")
 
     def test_describe_latin1_message_groups_bytes_into_blocks_and_tail(self) -> None:
         description = describe_latin1_message("ABC")
@@ -149,6 +157,8 @@ class WebAppSourceTests(unittest.TestCase):
         app_source = Path("webapp/app.py").read_text(encoding="utf-8")
         self.assertIn("if __package__ in (None, \"\"):", app_source)
         self.assertIn("sys.path.insert(0, project_root_str)", app_source)
+        self.assertIn("Created by Emilio Yared and Antonio Youssef", app_source)
+        self.assertIn("Plaintext block (2 characters)", app_source)
 
     def test_webapp_uses_mermaid_and_avoids_colored_status_widgets(self) -> None:
         components_source = Path("webapp/components.py").read_text(encoding="utf-8")
@@ -159,6 +169,10 @@ class WebAppSourceTests(unittest.TestCase):
         self.assertIn(".saes-card code,", components_source)
         self.assertIn("background: var(--saes-white) !important;", components_source)
         self.assertIn("display: block;", components_source)
+        self.assertIn(".saes-credit", components_source)
+        self.assertIn(".saes-table-wrap", components_source)
+        self.assertIn('@media (max-width: 640px)', components_source)
+        self.assertIn('[data-testid="stHorizontalBlock"]', components_source)
         self.assertNotIn(".stApp div,", components_source)
         self.assertNotIn(".stApp span,", components_source)
 
